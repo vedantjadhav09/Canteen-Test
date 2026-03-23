@@ -1,0 +1,745 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Canteen Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0b0f;
+    --surface: #12141c;
+    --surface2: #1b1e2a;
+    --surface3: #242736;
+    --accent: #f5a623;
+    --accent-glow: rgba(245,166,35,0.15);
+    --accent2: #ff6b35;
+    --green: #34d399;
+    --green-dim: rgba(52,211,153,0.12);
+    --blue: #60a5fa;
+    --blue-dim: rgba(96,165,250,0.12);
+    --red: #ef4444;
+    --red-dim: rgba(239,68,68,0.1);
+    --purple: #a78bfa;
+    --purple-dim: rgba(167,139,250,0.12);
+    --text: #f0efe8;
+    --text2: #c8c7c0;
+    --muted: #6b6f85;
+    --border: rgba(255,255,255,0.06);
+    --border2: rgba(255,255,255,0.1);
+    --r: 14px;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html { background:var(--bg); }
+  body {
+    background:var(--bg); color:var(--text);
+    font-family:'DM Sans',system-ui,sans-serif;
+    min-height:100dvh; max-width:430px; margin:0 auto;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ═══ PIN SCREEN ═══ */
+  #pinScreen {
+    display:flex; flex-direction:column; align-items:center;
+    justify-content:center; min-height:100dvh; padding:40px 24px;
+    text-align:center;
+  }
+  .pin-lock { font-size:48px; margin-bottom:20px; opacity:0.8; }
+  .pin-title {
+    font-family:'Syne',sans-serif; font-size:22px; font-weight:800;
+    margin-bottom:6px; letter-spacing:-0.5px;
+  }
+  .pin-sub { color:var(--muted); font-size:13px; margin-bottom:28px; }
+  .pin-row { display:flex; gap:10px; margin-bottom:20px; }
+  .pin-dot {
+    width:14px; height:14px; border-radius:50%;
+    border:2px solid var(--border2); background:transparent;
+    transition:all 0.2s;
+  }
+  .pin-dot.filled { background:var(--accent); border-color:var(--accent); }
+  .pin-pad { display:grid; grid-template-columns:repeat(3,72px); gap:10px; }
+  .pin-btn {
+    width:72px; height:56px; border-radius:12px; border:1px solid var(--border2);
+    background:var(--surface); color:var(--text); font-family:'Syne',sans-serif;
+    font-size:20px; font-weight:700; cursor:pointer; transition:all 0.15s;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pin-btn:active { background:var(--accent); color:#000; transform:scale(0.95); }
+  .pin-btn.fn { font-size:13px; font-family:'DM Sans',sans-serif; font-weight:500; color:var(--muted); }
+  .pin-error {
+    color:var(--red); font-size:12px; margin-top:12px;
+    opacity:0; transition:opacity 0.3s;
+  }
+  .pin-error.show { opacity:1; }
+  @keyframes shake { 20%,60%{transform:translateX(-4px)} 40%,80%{transform:translateX(4px)} }
+
+  /* ═══ ADMIN DASHBOARD ═══ */
+  #adminDash { display:none; padding-bottom:24px; }
+
+  .admin-header {
+    background:linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
+    padding:20px 20px 16px; position:sticky; top:0; z-index:100;
+    border-bottom:1px solid var(--border);
+  }
+  .admin-header-row {
+    display:flex; justify-content:space-between; align-items:center;
+  }
+  .admin-brand { font-family:'Syne',sans-serif; }
+  .admin-brand h1 {
+    font-size:20px; font-weight:800; letter-spacing:-0.5px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .admin-brand h1 span { color:var(--accent); }
+  .admin-badge {
+    font-size:9px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    color:var(--bg); background:var(--accent); padding:3px 8px;
+    border-radius:6px;
+  }
+  .admin-brand p { font-size:11px; color:var(--muted); margin-top:3px; }
+  .logout-btn {
+    background:var(--surface2); border:1px solid var(--border2);
+    color:var(--muted); font-size:11px; font-family:'DM Sans',sans-serif;
+    padding:6px 12px; border-radius:8px; cursor:pointer;
+  }
+
+  /* ── Tabs ── */
+  .tabs {
+    display:flex; gap:4px; padding:12px 20px 0;
+    border-bottom:1px solid var(--border);
+  }
+  .tab {
+    flex:1; text-align:center; padding:10px 0 12px;
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    letter-spacing:0.5px; color:var(--muted);
+    border-bottom:2px solid transparent;
+    cursor:pointer; transition:all 0.2s; position:relative;
+  }
+  .tab.active { color:var(--accent); border-bottom-color:var(--accent); }
+  .tab-badge {
+    position:absolute; top:6px; right:calc(50% - 36px);
+    background:var(--red); color:#fff; font-size:9px;
+    font-family:'DM Sans',sans-serif; font-weight:600;
+    min-width:18px; height:18px; line-height:18px;
+    border-radius:9px; text-align:center; padding:0 5px;
+    display:none;
+  }
+  .tab-badge.show { display:block; }
+
+  /* ── Stats bar ── */
+  .stats-bar {
+    display:flex; gap:8px; padding:16px 16px 0;
+  }
+  .stat-card {
+    flex:1; background:var(--surface); border:1px solid var(--border);
+    border-radius:12px; padding:12px; text-align:center;
+  }
+  .stat-num {
+    font-family:'Syne',sans-serif; font-size:24px; font-weight:800;
+  }
+  .stat-num.orange { color:var(--accent); }
+  .stat-num.green  { color:var(--green); }
+  .stat-num.blue   { color:var(--blue); }
+  .stat-label { font-size:10px; color:var(--muted); margin-top:2px; letter-spacing:0.3px; }
+
+  /* ═══ ORDERS TAB ═══ */
+  .orders-section { padding:12px 16px; }
+  .order-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:14px 16px; margin-bottom:10px;
+    transition:all 0.2s;
+  }
+  .order-card.status-received { border-left:3px solid var(--accent); }
+  .order-card.status-preparing { border-left:3px solid var(--blue); }
+  .order-card.status-ready { border-left:3px solid var(--green); }
+  .order-top {
+    display:flex; justify-content:space-between; align-items:flex-start;
+    margin-bottom:8px;
+  }
+  .order-token {
+    font-family:'Syne',sans-serif; font-size:18px; font-weight:800;
+    color:var(--accent);
+  }
+  .order-time { font-size:11px; color:var(--muted); }
+  .order-name { font-size:14px; font-weight:500; margin-bottom:2px; }
+  .order-empid { font-size:11px; color:var(--muted); }
+  .order-items {
+    font-size:13px; color:var(--text2); margin:8px 0;
+    padding:8px 10px; background:var(--surface2);
+    border-radius:8px; line-height:1.5;
+  }
+  .order-bottom {
+    display:flex; justify-content:space-between; align-items:center;
+    margin-top:10px;
+  }
+  .order-total {
+    font-family:'Syne',sans-serif; font-size:15px; font-weight:700;
+  }
+  .order-coupon {
+    font-size:11px; color:var(--purple); background:var(--purple-dim);
+    padding:2px 8px; border-radius:6px;
+  }
+  .order-note {
+    font-size:12px; color:var(--accent); font-style:italic;
+    margin-top:6px; padding-left:2px;
+  }
+  .status-btns { display:flex; gap:6px; }
+  .status-btn {
+    padding:8px 14px; border-radius:8px; border:1px solid var(--border2);
+    font-family:'DM Sans',sans-serif; font-size:12px; font-weight:600;
+    cursor:pointer; transition:all 0.15s; background:var(--surface2); color:var(--text2);
+  }
+  .status-btn:active { transform:scale(0.95); }
+  .status-btn.btn-preparing { border-color:rgba(96,165,250,0.3); color:var(--blue); }
+  .status-btn.btn-preparing:active { background:var(--blue-dim); }
+  .status-btn.btn-ready { border-color:rgba(52,211,153,0.3); color:var(--green); }
+  .status-btn.btn-ready:active { background:var(--green-dim); }
+  .status-btn.current {
+    background:var(--green-dim); border-color:rgba(52,211,153,0.3);
+    color:var(--green); pointer-events:none;
+  }
+  .empty-state {
+    text-align:center; padding:48px 20px; color:var(--muted);
+  }
+  .empty-state .empty-icon { font-size:40px; margin-bottom:12px; opacity:0.5; }
+  .empty-state p { font-size:14px; }
+
+  /* ═══ MENU TAB ═══ */
+  .menu-section { padding:12px 16px; display:none; }
+  .menu-section.show { display:block; }
+  .menu-admin-card {
+    background:var(--surface); border:1px solid var(--border);
+    border-radius:var(--r); padding:14px 16px; margin-bottom:10px;
+    display:flex; align-items:center; justify-content:space-between;
+    transition:all 0.2s;
+  }
+  .menu-admin-card.unavailable { opacity:0.45; }
+  .mac-left { display:flex; align-items:center; gap:12px; flex:1; }
+  .mac-emoji { font-size:24px; }
+  .mac-name { font-size:14px; font-weight:500; }
+  .mac-cat { font-size:11px; color:var(--muted); }
+  .mac-price {
+    font-family:'Syne',sans-serif; font-size:14px; font-weight:700;
+    color:var(--accent); margin-right:12px;
+  }
+  /* Toggle switch */
+  .toggle {
+    width:44px; height:26px; border-radius:13px;
+    background:var(--surface3); border:1px solid var(--border2);
+    cursor:pointer; position:relative; transition:all 0.3s;
+    flex-shrink:0;
+  }
+  .toggle.on { background:var(--green); border-color:rgba(52,211,153,0.5); }
+  .toggle::after {
+    content:''; position:absolute; top:2px; left:2px;
+    width:20px; height:20px; border-radius:50%;
+    background:white; transition:transform 0.3s;
+    box-shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+  .toggle.on::after { transform:translateX(18px); }
+
+  /* ── Add item form ── */
+  .add-form {
+    background:var(--surface); border:1px solid var(--border2);
+    border-radius:var(--r); padding:16px; margin-bottom:16px;
+  }
+  .add-form-title {
+    font-family:'Syne',sans-serif; font-size:12px; font-weight:700;
+    color:var(--accent); letter-spacing:1px; text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .form-row { display:flex; gap:8px; margin-bottom:8px; }
+  .form-field {
+    flex:1; background:var(--surface2); border:1px solid var(--border2);
+    border-radius:10px; color:var(--text); font-family:'DM Sans',sans-serif;
+    font-size:13px; padding:10px 12px; outline:none;
+    transition:border-color 0.2s;
+  }
+  .form-field:focus { border-color:rgba(245,166,35,0.3); }
+  .form-field::placeholder { color:var(--muted); }
+  select.form-field { -webkit-appearance:none; appearance:none; cursor:pointer; }
+  .form-submit {
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background:var(--accent); color:#0a0b0f; font-family:'Syne',sans-serif;
+    font-size:13px; font-weight:700; cursor:pointer; margin-top:4px;
+    transition:all 0.15s;
+  }
+  .form-submit:active { transform:scale(0.97); }
+
+  /* ── Delete btn ── */
+  .del-btn {
+    width:28px; height:28px; border-radius:7px; border:1px solid var(--border2);
+    background:var(--surface2); color:var(--red); font-size:14px;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+    margin-left:8px; flex-shrink:0; transition:all 0.15s;
+  }
+  .del-btn:active { background:var(--red-dim); }
+
+  /* ═══ AUTO-REFRESH INDICATOR ═══ */
+  .refresh-bar {
+    padding:8px 16px; display:flex; align-items:center;
+    justify-content:space-between;
+  }
+  .refresh-left { display:flex; align-items:center; gap:6px; }
+  .refresh-dot {
+    width:6px; height:6px; border-radius:50%; background:var(--green);
+    animation:blink 2s ease-in-out infinite;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .refresh-text { font-size:11px; color:var(--muted); }
+  .refresh-manual {
+    font-size:11px; color:var(--accent); background:none; border:none;
+    cursor:pointer; font-family:'DM Sans',sans-serif; font-weight:500;
+    padding:4px 8px;
+  }
+
+  .hidden { display:none !important; }
+
+  /* toast */
+  .toast {
+    position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px);
+    background:var(--surface); border:1px solid var(--border2);
+    color:var(--text); font-size:13px; padding:10px 20px;
+    border-radius:10px; z-index:999; transition:transform 0.3s ease;
+    box-shadow:0 8px 32px rgba(0,0,0,0.4); white-space:nowrap;
+    max-width:90%;
+  }
+  .toast.show { transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<script>
+  // ══════════════════════════════════════════
+  // Replace with YOUR Apps Script Web App URL
+  // ══════════════════════════════════════════
+  var SCRIPT_URL = "YOUR_APPS_SCRIPT_URL_HERE";
+  var ADMIN_PIN  = "1234";  // Change this to your preferred PIN
+</script>
+
+<!-- ═══ PIN Screen ═══ -->
+<div id="pinScreen">
+  <div class="pin-lock">🔒</div>
+  <div class="pin-title">Admin Access</div>
+  <div class="pin-sub">Enter 4-digit PIN to continue</div>
+  <div class="pin-row" id="pinDots">
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+    <div class="pin-dot"></div><div class="pin-dot"></div>
+  </div>
+  <div class="pin-pad" id="pinPad">
+    <button class="pin-btn" onclick="pinPress('1')">1</button>
+    <button class="pin-btn" onclick="pinPress('2')">2</button>
+    <button class="pin-btn" onclick="pinPress('3')">3</button>
+    <button class="pin-btn" onclick="pinPress('4')">4</button>
+    <button class="pin-btn" onclick="pinPress('5')">5</button>
+    <button class="pin-btn" onclick="pinPress('6')">6</button>
+    <button class="pin-btn" onclick="pinPress('7')">7</button>
+    <button class="pin-btn" onclick="pinPress('8')">8</button>
+    <button class="pin-btn" onclick="pinPress('9')">9</button>
+    <button class="pin-btn fn" onclick="pinClear()">Clear</button>
+    <button class="pin-btn" onclick="pinPress('0')">0</button>
+    <button class="pin-btn fn" onclick="pinBack()">⌫</button>
+  </div>
+  <div class="pin-error" id="pinError">Wrong PIN. Try again.</div>
+</div>
+
+<!-- ═══ Admin Dashboard ═══ -->
+<div id="adminDash">
+
+  <div class="admin-header">
+    <div class="admin-header-row">
+      <div class="admin-brand">
+        <h1>Canteen <span>Admin</span> <span class="admin-badge">STAFF</span></h1>
+        <p id="adminDate"></p>
+      </div>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" id="tabOrders" onclick="switchTab('orders')">
+      Orders
+      <div class="tab-badge" id="ordersBadge"></div>
+    </div>
+    <div class="tab" id="tabMenu" onclick="switchTab('menu')">Menu</div>
+  </div>
+
+  <!-- ── Stats ── -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-num orange" id="statPending">0</div>
+      <div class="stat-label">Pending</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num blue" id="statPreparing">0</div>
+      <div class="stat-label">Preparing</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num green" id="statReady">0</div>
+      <div class="stat-label">Ready</div>
+    </div>
+  </div>
+
+  <!-- ── Refresh bar ── -->
+  <div class="refresh-bar" id="refreshBar">
+    <div class="refresh-left">
+      <div class="refresh-dot"></div>
+      <div class="refresh-text">Auto-refresh every 15s</div>
+    </div>
+    <button class="refresh-manual" onclick="loadOrders()">Refresh now</button>
+  </div>
+
+  <!-- ── Orders list ── -->
+  <div class="orders-section" id="ordersSection">
+    <div class="empty-state" id="emptyOrders">
+      <div class="empty-icon">📭</div>
+      <p>No orders yet today.<br>They'll appear here automatically.</p>
+    </div>
+    <div id="ordersList"></div>
+  </div>
+
+  <!-- ── Menu management ── -->
+  <div class="menu-section" id="menuSection">
+
+    <div class="add-form">
+      <div class="add-form-title">+ Add Menu Item</div>
+      <div class="form-row">
+        <select class="form-field" id="addCategory">
+          <option value="Today's Sabji">Today's Sabji</option>
+          <option value="Regular">Regular</option>
+          <option value="Drinks">Drinks</option>
+        </select>
+        <input class="form-field" type="text" placeholder="Item name" id="addName">
+      </div>
+      <div class="form-row">
+        <input class="form-field" type="number" placeholder="Price ₹" id="addPrice" style="max-width:100px">
+        <input class="form-field" type="text" placeholder="Emoji 🍛" id="addEmoji" maxlength="4" style="max-width:70px">
+        <input class="form-field" type="text" placeholder="Description" id="addDesc">
+      </div>
+      <button class="form-submit" onclick="addMenuItem()">Add Item</button>
+    </div>
+
+    <div id="menuList"></div>
+  </div>
+
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ─── State ──────────────────────────────────────────────────
+var pin = "";
+var orders = [];
+var menuItems = [];
+var refreshInterval = null;
+var currentTab = "orders";
+
+// ─── PIN Logic ──────────────────────────────────────────────
+function pinPress(n) {
+  if (pin.length >= 4) return;
+  pin += n;
+  updateDots();
+  if (pin.length === 4) {
+    setTimeout(function() {
+      if (pin === ADMIN_PIN) {
+        document.getElementById('pinScreen').classList.add('hidden');
+        document.getElementById('adminDash').style.display = 'block';
+        initDashboard();
+      } else {
+        document.getElementById('pinError').classList.add('show');
+        document.getElementById('pinDots').style.animation = 'shake 0.4s ease';
+        setTimeout(function() {
+          pin = "";
+          updateDots();
+          document.getElementById('pinDots').style.animation = '';
+          document.getElementById('pinError').classList.remove('show');
+        }, 1000);
+      }
+    }, 200);
+  }
+}
+function pinBack() {
+  pin = pin.slice(0, -1);
+  updateDots();
+}
+function pinClear() {
+  pin = "";
+  updateDots();
+}
+function updateDots() {
+  var dots = document.querySelectorAll('.pin-dot');
+  for (var i = 0; i < dots.length; i++) {
+    dots[i].classList.toggle('filled', i < pin.length);
+  }
+}
+function logout() {
+  clearInterval(refreshInterval);
+  document.getElementById('adminDash').style.display = 'none';
+  document.getElementById('pinScreen').classList.remove('hidden');
+  pin = "";
+  updateDots();
+}
+
+// ─── Dashboard Init ─────────────────────────────────────────
+function initDashboard() {
+  var now = new Date();
+  var days = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  document.getElementById('adminDate').textContent =
+    days[now.getDay()] + ', ' + now.getDate() + ' ' + months[now.getMonth()] + ' ' + now.getFullYear();
+
+  loadOrders();
+  loadMenu();
+
+  clearInterval(refreshInterval);
+  refreshInterval = setInterval(function() {
+    if (currentTab === 'orders') loadOrders();
+  }, 15000);
+}
+
+// ─── Tab switching ──────────────────────────────────────────
+function switchTab(tab) {
+  currentTab = tab;
+  document.getElementById('tabOrders').classList.toggle('active', tab === 'orders');
+  document.getElementById('tabMenu').classList.toggle('active', tab === 'menu');
+  document.getElementById('ordersSection').style.display = tab === 'orders' ? 'block' : 'none';
+  document.getElementById('statsBar').style.display = tab === 'orders' ? 'flex' : 'none';
+  document.getElementById('refreshBar').style.display = tab === 'orders' ? 'flex' : 'none';
+  document.getElementById('menuSection').classList.toggle('show', tab === 'menu');
+
+  if (tab === 'menu') loadMenu();
+  if (tab === 'orders') loadOrders();
+}
+
+// ─── Load Orders ────────────────────────────────────────────
+async function loadOrders() {
+  try {
+    var res = await fetch(SCRIPT_URL + '?action=adminOrders');
+    var json = await res.json();
+    orders = json.orders || [];
+    renderOrders();
+  } catch(e) {
+    console.error('Failed to load orders:', e);
+  }
+}
+
+function renderOrders() {
+  var list = document.getElementById('ordersList');
+  var empty = document.getElementById('emptyOrders');
+
+  // Filter today's orders only (already filtered server-side but just in case)
+  var pending = 0, preparing = 0, ready = 0;
+  orders.forEach(function(o) {
+    var s = (o.status || '').toLowerCase();
+    if (s === 'received') pending++;
+    else if (s === 'preparing') preparing++;
+    else if (s === 'ready') ready++;
+  });
+
+  document.getElementById('statPending').textContent = pending;
+  document.getElementById('statPreparing').textContent = preparing;
+  document.getElementById('statReady').textContent = ready;
+
+  // Badge
+  var badge = document.getElementById('ordersBadge');
+  if (pending > 0) {
+    badge.textContent = pending;
+    badge.classList.add('show');
+  } else {
+    badge.classList.remove('show');
+  }
+
+  if (orders.length === 0) {
+    empty.style.display = 'block';
+    list.innerHTML = '';
+    return;
+  }
+  empty.style.display = 'none';
+
+  // Sort: received first, then preparing, then ready
+  var sortOrder = { 'received': 0, 'preparing': 1, 'ready': 2 };
+  var sorted = orders.slice().sort(function(a, b) {
+    var sa = sortOrder[(a.status||'').toLowerCase()] || 0;
+    var sb = sortOrder[(b.status||'').toLowerCase()] || 0;
+    return sa - sb;
+  });
+
+  var html = '';
+  sorted.forEach(function(o) {
+    var s = (o.status || 'received').toLowerCase();
+    var statusClass = 'status-' + s;
+
+    var couponHtml = '';
+    if (o.coupon && o.coupon !== '—' && o.coupon !== '') {
+      couponHtml = '<span class="order-coupon">🎟️ Coupon #' + esc(String(o.coupon)) + ' (−₹' + (o.discount || 30) + ')</span>';
+    }
+
+    var noteHtml = '';
+    if (o.note && o.note !== '—' && o.note !== '') {
+      noteHtml = '<div class="order-note">📝 ' + esc(o.note) + '</div>';
+    }
+
+    var btns = '';
+    if (s === 'received') {
+      btns = '<button class="status-btn btn-preparing" onclick="updateStatus(' + o.token + ',\'Preparing\')">🔥 Preparing</button>' +
+             '<button class="status-btn btn-ready" onclick="updateStatus(' + o.token + ',\'Ready\')">✅ Ready</button>';
+    } else if (s === 'preparing') {
+      btns = '<button class="status-btn current">🔥 Preparing</button>' +
+             '<button class="status-btn btn-ready" onclick="updateStatus(' + o.token + ',\'Ready\')">✅ Ready</button>';
+    } else {
+      btns = '<button class="status-btn current">✅ Ready</button>';
+    }
+
+    html += '<div class="order-card ' + statusClass + '">' +
+      '<div class="order-top">' +
+        '<div>' +
+          '<div class="order-token">#' + o.token + '</div>' +
+          '<div class="order-name">' + esc(o.name) + '</div>' +
+          '<div class="order-empid">Emp ID: ' + esc(String(o.empId || '—')) + '</div>' +
+        '</div>' +
+        '<div class="order-time">' + esc(o.time || '') + '</div>' +
+      '</div>' +
+      '<div class="order-items">' + esc(o.items) + '</div>' +
+      noteHtml +
+      '<div class="order-bottom">' +
+        '<div><div class="order-total">₹' + o.total + '</div>' + couponHtml + '</div>' +
+        '<div class="status-btns">' + btns + '</div>' +
+      '</div>' +
+    '</div>';
+  });
+
+  list.innerHTML = html;
+}
+
+// ─── Update Order Status ────────────────────────────────────
+async function updateStatus(token, status) {
+  try {
+    var res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ adminAction: 'updateStatus', token: token, status: status })
+    });
+    var json = await res.json();
+    if (json.success) {
+      showToast('Token #' + token + ' → ' + status);
+      loadOrders();
+    } else {
+      showToast('Error: ' + (json.error || 'Unknown'));
+    }
+  } catch(e) {
+    showToast('Network error');
+  }
+}
+
+// ─── Load Menu ──────────────────────────────────────────────
+async function loadMenu() {
+  try {
+    var res = await fetch(SCRIPT_URL + '?action=adminMenu');
+    var json = await res.json();
+    menuItems = json.menu || [];
+    renderMenuAdmin();
+  } catch(e) {
+    console.error('Failed to load menu:', e);
+  }
+}
+
+function renderMenuAdmin() {
+  var list = document.getElementById('menuList');
+  if (menuItems.length === 0) {
+    list.innerHTML = '<div class="empty-state"><p>No menu items. Add one above.</p></div>';
+    return;
+  }
+
+  var html = '';
+  menuItems.forEach(function(item, idx) {
+    var isOn = String(item.available).toLowerCase() === 'yes';
+    html += '<div class="menu-admin-card' + (isOn ? '' : ' unavailable') + '">' +
+      '<div class="mac-left">' +
+        '<div class="mac-emoji">' + (item.emoji || '🍽️') + '</div>' +
+        '<div>' +
+          '<div class="mac-name">' + esc(item.name) + '</div>' +
+          '<div class="mac-cat">' + esc(item.category) + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="mac-price">₹' + item.price + '</div>' +
+      '<div class="toggle' + (isOn ? ' on' : '') + '" onclick="toggleAvail(' + (idx + 2) + ',\'' + (isOn ? 'no' : 'yes') + '\')"></div>' +
+      '<button class="del-btn" onclick="deleteMenuItem(' + (idx + 2) + ',\'' + esc(item.name) + '\')">×</button>' +
+    '</div>';
+  });
+  list.innerHTML = html;
+}
+
+// ─── Toggle Menu Availability ───────────────────────────────
+async function toggleAvail(row, newVal) {
+  try {
+    var res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ adminAction: 'toggleAvail', row: row, available: newVal })
+    });
+    var json = await res.json();
+    if (json.success) {
+      showToast(newVal === 'yes' ? 'Item available ✓' : 'Item hidden');
+      loadMenu();
+    }
+  } catch(e) { showToast('Error toggling'); }
+}
+
+// ─── Add Menu Item ──────────────────────────────────────────
+async function addMenuItem() {
+  var cat   = document.getElementById('addCategory').value;
+  var name  = document.getElementById('addName').value.trim();
+  var price = document.getElementById('addPrice').value.trim();
+  var emoji = document.getElementById('addEmoji').value.trim() || '🍽️';
+  var desc  = document.getElementById('addDesc').value.trim();
+
+  if (!name || !price) { showToast('Name and price required'); return; }
+
+  try {
+    var res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({
+        adminAction: 'addMenuItem',
+        category: cat, name: name, price: parseInt(price),
+        emoji: emoji, description: desc
+      })
+    });
+    var json = await res.json();
+    if (json.success) {
+      showToast(name + ' added!');
+      document.getElementById('addName').value = '';
+      document.getElementById('addPrice').value = '';
+      document.getElementById('addEmoji').value = '';
+      document.getElementById('addDesc').value = '';
+      loadMenu();
+    }
+  } catch(e) { showToast('Error adding item'); }
+}
+
+// ─── Delete Menu Item ───────────────────────────────────────
+async function deleteMenuItem(row, name) {
+  if (!confirm('Delete "' + name + '" from menu?')) return;
+  try {
+    var res = await fetch(SCRIPT_URL, {
+      method: 'POST',
+      body: JSON.stringify({ adminAction: 'deleteMenuItem', row: row })
+    });
+    var json = await res.json();
+    if (json.success) {
+      showToast(name + ' deleted');
+      loadMenu();
+    }
+  } catch(e) { showToast('Error deleting'); }
+}
+
+// ─── Helpers ────────────────────────────────────────────────
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2500);
+}
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+</body>
+</html>
